@@ -4,72 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>คุ้กกี้ของน้องปฐมนิเทศ</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+
     <style>
-        /* นำเข้าฟอนต์ */
+        /* นำเข้าฟอนต์ DSBanballTester (ต้องมีไฟล์ .ttf อยู่ในโฟลเดอร์เดียวกันบน GitHub) */
         @font-face {
             font-family: 'DSBanballTester';
             src: url('DSBanballTester.ttf') format('truetype');
-            /* หากยังไม่มีไฟล์ฟอนต์ จะใช้ฟอนต์สำรองชั่วคราว */
         }
 
-        body {
+        body, html {
             margin: 0;
             padding: 0;
-            background-color: #ffffff;
-            /* พื้นหลังสีขาว ลายโพกาดอทสีดำจางๆ */
-            background-image: radial-gradient(rgba(0, 0, 0, 0.08) 3px, transparent 3px);
-            background-size: 40px 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: 'DSBanballTester', 'Comic Sans MS', sans-serif;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            touch-action: none; /* ป้องกันการเลื่อนหน้าจอบนมือถือ */
+            /* ฟอนต์หลักของโปรเจกต์เว็บเน้นแบบไม่มีหัวเพื่อความทันสมัย */
+            font-family: 'DSBanballTester', 'Prompt', sans-serif;
+            background-color: #ffffff;
+            /* พื้นหลังลายโพกาดอทสีดำจางๆ */
+            background-image: radial-gradient(#e0e0e0 15%, transparent 16%), radial-gradient(#e0e0e0 15%, transparent 16%);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            touch-action: none; /* ป้องกันการเลื่อนหน้าจอตอนกดเล่นบนมือถือ */
         }
 
-        /* ตั้งค่าความกว้างให้พอดีทั้งคอมและมือถือ */
         #game-container {
             position: relative;
             width: 100%;
-            max-width: 500px; /* ขนาดสูงสุดบนจอคอม */
-            height: 100vh;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            background-color: rgba(255, 255, 255, 0.5); /* ให้พื้นหลังโปร่งแสงนิดๆ */
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
             height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         #ui-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
+            top: 20px;
             text-align: center;
-            pointer-events: none;
+            z-index: 10;
+            pointer-events: none; /* ให้คลิกทะลุไปโดนตัวเกมได้ */
+            width: 100%;
         }
 
-        /* ชื่อเกม */
-        h1 {
-            margin-top: 20px;
+        #game-title {
             font-size: 2.5rem;
-            text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff;
-            line-height: 1.2;
-            padding: 0 10px;
+            margin: 0;
+            font-weight: bold;
+            /* ใช้ text-shadow สีเข้มบางๆ เพื่อให้สีพาสเทลลอยเด่นขึ้นมาจากพื้นขาว */
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1); 
         }
 
-        #score-display {
-            font-size: 2rem;
-            color: #ff9a9e;
-            text-shadow: 1px 1px 0px #fff;
-            margin-top: -10px;
+        #score-board {
+            font-size: 1.5rem;
+            color: #555;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px 20px;
+            border-radius: 30px;
+            display: inline-block;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* ตัวแสดงคุกกี้ที่ลอยไปมาด้านบน */
+        #spawner {
+            position: absolute;
+            top: 100px;
+            width: 60px; /* ขนาดคุกกี้ */
+            height: 60px;
+            background-image: url('คุกกี้.png'); /* เปลี่ยนเป็นชื่อไฟล์ภาพคุกกี้ของคุณ */
+            background-size: cover;
+            z-index: 5;
+            transition: transform 0.1s;
         }
 
         #game-over {
-            display: none;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -77,279 +87,245 @@
             background: rgba(255, 255, 255, 0.95);
             padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             text-align: center;
-            border: 4px dashed #ffb3ba;
-            pointer-events: auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            z-index: 20;
+            display: none;
+            width: 80%;
+            max-width: 300px;
         }
 
         #game-over h2 {
-            color: #ff9a9e;
-            font-size: 2.5rem;
-            margin: 0 0 15px 0;
+            color: #ff6b6b;
+            margin-top: 0;
         }
 
         button {
-            font-family: 'DSBanballTester', 'Comic Sans MS', sans-serif;
-            background-color: #baffc9;
+            font-family: 'Prompt', sans-serif;
+            background-color: #a2d2ff;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.5rem;
-            border-radius: 50px;
-            color: #555;
+            padding: 12px 24px;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            color: white;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(186, 255, 201, 0.6);
-            transition: transform 0.2s;
+            box-shadow: 0 4px 0px #82b2df;
+            transition: all 0.1s;
+            margin-top: 15px;
         }
 
-        button:hover {
-            transform: scale(1.05);
-            background-color: #a0f0b0;
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0px #82b2df;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
         }
     </style>
 </head>
 <body>
 
-    <audio id="bgMusic" loop>
-        <source src="bgm.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bg-music" src="cute-music.mp3" loop preload="auto"></audio>
 
     <div id="game-container">
         <div id="ui-layer">
-            <h1 id="game-title"></h1>
-            <div id="score-display">ชั้นที่: 0</div>
+            <h1 id="game-title">คุ้กกี้ของน้องปฐมนิเทศ</h1>
+            <div id="score-board">คะแนน: <span id="score">0</span></div>
         </div>
-        
-        <canvas id="gameCanvas"></canvas>
-        
+
+        <div id="spawner"></div>
+
         <div id="game-over">
-            <h2>เกมจบแล้ว!</h2>
-            <p style="font-size: 1.5rem; color: #666;">ความสูง: <span id="final-score">0</span> ชั้น</p>
-            <button onclick="resetGame()">เริ่มเล่นใหม่</button>
+            <h2>อ๊ะ! คุกกี้ตกแล้ว</h2>
+            <p>ต่อได้ทั้งหมด: <span id="final-score">0</span> ชิ้น</p>
+            <button onclick="restartGame()">เริ่มเล่นใหม่</button>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script>
-        // --- 1. การจัดการสีพาสเทลสลับตัวอักษรของชื่อเกม ---
-        const titleText = "คุ้กกี้ของน้องปฐมนิเทศ";
-        const pastelColors = ['#000000'];
-        const titleElement = document.getElementById('game-title');
+        // 1. จัดการสีตัวอักษร Title ให้เป็นสีพาสเทลสลับกัน
+        const titleEl = document.getElementById('game-title');
+        const titleText = titleEl.innerText;
+        titleEl.innerHTML = '';
+        const pastelColors = ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e8b9fe'];
         
-        let titleHTML = '';
-        for (let i = 0; i < titleText.length; i++) {
-            const color = pastelColors[i % pastelColors.length];
-            titleHTML += `<span style="color: ${color};">${titleText[i]}</span>`;
+        for(let i = 0; i < titleText.length; i++) {
+            let span = document.createElement('span');
+            span.innerText = titleText[i];
+            span.style.color = pastelColors[i % pastelColors.length];
+            titleEl.appendChild(span);
         }
-        titleElement.innerHTML = titleHTML;
 
-        // --- 2. การตั้งค่า Canvas และ ตัวแปรเกม ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        // โหลดรูปภาพ
-        const cookieImg = new Image();
-        cookieImg.src = 'คุกกี้.png';
-        
-        const boxImg = new Image();
-        boxImg.src = 'ถาด.png';
+        // 2. ตั้งค่าระบบฟิสิกส์ (Matter.js)
+        const Engine = Matter.Engine,
+              Render = Matter.Render,
+              Runner = Matter.Runner,
+              Bodies = Matter.Bodies,
+              Composite = Matter.Composite,
+              Events = Matter.Events;
 
-        let width, height;
+        let engine, render, runner;
         let score = 0;
-        let gameState = 'playing'; // 'playing', 'gameover'
-        let cameraY = 0; 
-        let bgMusicPlayed = false;
-
-        // ตัวแปรสำหรับวัตถุในเกม
-        const cookieSize = 60;
-        const boxWidth = 100;
-        const boxHeight = 80;
+        let isGameOver = false;
+        let spawnerX = 0;
+        let time = 0;
         
-        let movingCookie = { x: 0, y: 100, w: cookieSize, h: cookieSize, speed: 4, direction: 1 };
-        let fallingCookie = null;
-        let stack = [];
-        let box = { x: 0, y: 0, w: boxWidth, h: boxHeight };
+        const spawnerEl = document.getElementById('spawner');
+        const scoreEl = document.getElementById('score');
+        const music = document.getElementById('bg-music');
+        
+        // กำหนดขนาดภาพ
+        const COOKIE_RADIUS = 30; // รัศมีคุกกี้ (รวมเป็น 60px)
+        const BOX_WIDTH = 200;
+        const BOX_HEIGHT = 150;
 
-        function resizeCanvas() {
-            width = canvas.clientWidth;
-            height = canvas.clientHeight;
-            canvas.width = width;
-            canvas.height = height;
-            
-            // วางกล่องไว้ตรงกลางด้านล่าง
-            box.x = (width - box.w) / 2;
-            box.y = height - box.h - 20;
-            
-            if (stack.length === 0 && gameState === 'playing') {
-                movingCookie.y = 100;
-            }
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        function initGame() {
+            engine = Engine.create();
+            // ลด Gravity ลงนิดหน่อยให้ดูนุ่มนวล
+            engine.world.gravity.y = 0.8; 
 
-        // --- 3. ระบบควบคุม (คลิกหรือแตะหน้าจอ) ---
-        function dropCookie(e) {
-            // เล่นเพลงเมื่อมีการกดครั้งแรก
-            if (!bgMusicPlayed) {
-                document.getElementById('bgMusic').play().catch(e => console.log("รอการโต้ตอบจากผู้ใช้"));
-                bgMusicPlayed = true;
-            }
-
-            if (gameState !== 'playing' || fallingCookie !== null) return;
-            
-            // ปล่อยคุ้กกี้ให้ตกลงมา
-            fallingCookie = {
-                x: movingCookie.x,
-                y: movingCookie.y - cameraY, // อิงพิกัดโลก (World Y)
-                w: cookieSize,
-                h: cookieSize,
-                speedY: 10
-            };
-            
-            // เตรียมคุ้กกี้ชิ้นใหม่ให้แกว่งรอ
-            movingCookie.speed += 0.2; // เพิ่มความเร็วขึ้นนิดหน่อยให้ท้าทาย
-            movingCookie.y -= cookieSize; // เลื่อนจุดเกิดขึ้นไป
-        }
-
-        canvas.addEventListener('mousedown', dropCookie);
-        canvas.addEventListener('touchstart', dropCookie);
-
-        // --- 4. ลอจิกของเกม ---
-        function update() {
-            if (gameState !== 'playing') return;
-
-            // อัปเดตคุ้กกี้ที่แกว่งไปมา (อิงพิกัดหน้าจอ)
-            movingCookie.x += movingCookie.speed * movingCookie.direction;
-            if (movingCookie.x <= 0 || movingCookie.x + movingCookie.w >= width) {
-                movingCookie.direction *= -1; // เด้งกลับ
-            }
-
-            // เลื่อนกล้องให้ตามความสูงของชั้นคุ้กกี้
-            let targetCameraY = 0;
-            if (stack.length > 2) {
-                // ให้คุ้กกี้ชิ้นบนสุดอยู่ประมาณกลางจอ
-                targetCameraY = (height / 2) - (box.y - (stack.length * cookieSize));
-            }
-            // ทำให้กล้องเลื่อนแบบนุ่มนวล
-            cameraY += (targetCameraY - cameraY) * 0.1;
-
-            // อัปเดตคุ้กกี้ที่กำลังตก
-            if (fallingCookie) {
-                fallingCookie.y += fallingCookie.speedY;
-
-                // ตรวจสอบการชน
-                let targetY = box.y - cookieSize; // ระดับความสูงที่ต้องชนเริ่มต้น (ชนกล่อง)
-                let targetX = box.x;
-                let targetW = box.w;
-
-                if (stack.length > 0) {
-                    const topCookie = stack[stack.length - 1];
-                    targetY = topCookie.y - cookieSize; // เปลี่ยนมาชนคุ้กกี้ชิ้นบนสุดแทน
-                    targetX = topCookie.x;
-                    targetW = topCookie.w;
+            render = Render.create({
+                element: document.getElementById('game-container'),
+                engine: engine,
+                options: {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    wireframes: false,
+                    background: 'transparent'
                 }
+            });
 
-                // ถ้าคุ้กกี้ตกลงมาถึงระดับชั้นบนสุด
-                if (fallingCookie.y >= targetY) {
-                    // ตรวจสอบว่าตกโดนฐานไหม (เหลื่อมกันได้นิดหน่อย)
-                    const tolerance = cookieSize * 0.4; 
-                    if (fallingCookie.x + fallingCookie.w > targetX + tolerance &&
-                        fallingCookie.x < targetX + targetW - tolerance) {
-                        
-                        // ต่อสำเร็จ!
-                        fallingCookie.y = targetY;
-                        stack.push(fallingCookie);
-                        fallingCookie = null;
-                        score++;
-                        document.getElementById('score-display').innerText = `ชั้นที่: ${score}`;
-                    } else {
-                        // พลาด! ตกหล่น
-                        gameState = 'gameover';
-                        gameOver();
+            // สร้างกล่องรับคุกกี้ด้านล่าง
+            const centerX = window.innerWidth / 2;
+            const bottomY = window.innerHeight - 50;
+            const wallThickness = 20;
+
+            const boxOptions = { 
+                isStatic: true, 
+                render: { fillStyle: 'transparent' } // ซ่อนสีพื้นฐาน
+            };
+
+            // สร้างกล่อง 3 ด้าน (พื้น, ซ้าย, ขวา)
+            const ground = Bodies.rectangle(centerX, bottomY, BOX_WIDTH, wallThickness, boxOptions);
+            const leftWall = Bodies.rectangle(centerX - BOX_WIDTH/2 + wallThickness/2, bottomY - BOX_HEIGHT/2, wallThickness, BOX_HEIGHT, boxOptions);
+            const rightWall = Bodies.rectangle(centerX + BOX_WIDTH/2 - wallThickness/2, bottomY - BOX_HEIGHT/2, wallThickness, BOX_HEIGHT, boxOptions);
+            
+            // ใช้ Sprite ภาพกล่องผูกติดกับพื้นกล่อง
+            ground.render.sprite = {
+                texture: 'ถาด.png', // เปลี่ยนเป็นชื่อไฟล์ภาพกล่องของคุณ
+                xScale: 1,
+                yScale: 1,
+                yOffset: -0.4 // ยกภาพกล่องขึ้นมาให้ครอบผนัง
+            };
+
+            Composite.add(engine.world, [ground, leftWall, rightWall]);
+
+            Render.run(render);
+            runner = Runner.create();
+            Runner.run(runner, engine);
+
+            // ตรวจสอบว่าคุกกี้ตกขอบจอหรือไม่ (Game Over)
+            Events.on(engine, 'beforeUpdate', function() {
+                const bodies = Composite.allBodies(engine.world);
+                for (let i = 0; i < bodies.length; i++) {
+                    let body = bodies[i];
+                    // ถ้าคุกกี้ร่วงลงไปเกินหน้าจอ ถือว่าจบเกม
+                    if (!body.isStatic && body.position.y > window.innerHeight + 100) {
+                        triggerGameOver();
                     }
                 }
-            }
+            });
+
+            requestAnimationFrame(animateSpawner);
         }
 
-        // --- 5. การวาดกราฟิก ---
-        function draw() {
-            ctx.clearRect(0, 0, width, height);
-
-            // วาดกล่อง (ใช้รูปถ้ามี ถ้าไม่มีวาดสี่เหลี่ยมสีพาสเทล)
-            ctx.save();
-            ctx.translate(0, cameraY); // เลื่อนตำแหน่งวาดตามกล้อง
+        // แอนิเมชันให้ Spawner (จุดปล่อย) ลอยไปมาซ้ายขวา
+        function animateSpawner() {
+            if(isGameOver) return;
+            time += 0.05;
+            const screenWidth = window.innerWidth;
+            const range = (screenWidth / 2) - 40;
+            // คำนวณตำแหน่ง X ด้วยฟังก์ชัน Sine wave
+            spawnerX = (screenWidth / 2) + Math.sin(time) * range;
             
-            if (boxImg.complete && boxImg.naturalHeight !== 0) {
-                ctx.drawImage(boxImg, box.x, box.y, box.w, box.h);
-            } else {
-                ctx.fillStyle = '#FFDFBA'; // สีสำรอง
-                ctx.fillRect(box.x, box.y, box.w, box.h);
-            }
-
-            // วาดชั้นคุ้กกี้ที่ต่อสำเร็จ
-            for (let c of stack) {
-                if (cookieImg.complete && cookieImg.naturalHeight !== 0) {
-                    ctx.drawImage(cookieImg, c.x, c.y, c.w, c.h);
-                } else {
-                    ctx.fillStyle = '#D4A373'; // สีคุ้กกี้สำรอง
-                    ctx.beginPath();
-                    ctx.arc(c.x + c.w/2, c.y + c.h/2, c.w/2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-
-            // วาดคุ้กกี้ที่กำลังตก
-            if (fallingCookie) {
-                if (cookieImg.complete && cookieImg.naturalHeight !== 0) {
-                    ctx.drawImage(cookieImg, fallingCookie.x, fallingCookie.y, fallingCookie.w, fallingCookie.h);
-                } else {
-                    ctx.fillStyle = '#D4A373';
-                    ctx.beginPath();
-                    ctx.arc(fallingCookie.x + fallingCookie.w/2, fallingCookie.y + fallingCookie.h/2, fallingCookie.w/2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-            ctx.restore();
-
-            // วาดคุ้กกี้ที่แกว่งไปมาด้านบน (วาดแยกเพราะไม่อิงกับกล้อง)
-            if (gameState === 'playing' && !fallingCookie) {
-                if (cookieImg.complete && cookieImg.naturalHeight !== 0) {
-                    ctx.drawImage(cookieImg, movingCookie.x, movingCookie.y, movingCookie.w, movingCookie.h);
-                } else {
-                    ctx.fillStyle = '#D4A373';
-                    ctx.beginPath();
-                    ctx.arc(movingCookie.x + movingCookie.w/2, movingCookie.y + movingCookie.h/2, movingCookie.w/2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
+            // อัปเดตตำแหน่งภาพ Spawner
+            spawnerEl.style.left = (spawnerX - COOKIE_RADIUS) + 'px';
+            requestAnimationFrame(animateSpawner);
         }
 
-        // --- 6. ลูปหลักของเกม ---
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
+        // เมื่อกดคลิกหรือแตะหน้าจอ จะทำการปล่อยคุกกี้
+        function dropCookie(e) {
+            if(isGameOver) return;
+            
+            // กดครั้งแรกให้เพลงเล่นอัตโนมัติ (เบราว์เซอร์บังคับให้ต้องมี Interaction ก่อนถึงจะเล่นเสียงได้)
+            if (music.paused) {
+                music.play().catch(e => console.log("รอผู้ใช้โต้ตอบเพื่อเล่นเพลง"));
+            }
+
+            // สร้าง Body คุกกี้ในระบบ Matter.js
+            const cookie = Bodies.circle(spawnerX, 100 + COOKIE_RADIUS, COOKIE_RADIUS, {
+                restitution: 0.3, // ความเด้ง
+                friction: 0.5, // ความฝืด
+                density: 0.05, // น้ำหนัก
+                render: {
+                    sprite: {
+                        texture: 'คุกกี้.png', // เปลี่ยนเป็นชื่อไฟล์ภาพคุกกี้ของคุณ
+                        xScale: 1,
+                        yScale: 1
+                    }
+                }
+            });
+
+            Composite.add(engine.world, cookie);
+            score++;
+            scoreEl.innerText = score;
         }
 
-        // --- 7. จัดการสถานะเกม ---
-        function gameOver() {
-            document.getElementById('final-score').innerText = score;
+        function triggerGameOver() {
+            if(isGameOver) return;
+            isGameOver = true;
+            document.getElementById('final-score').innerText = score - 1; // ลบ 1 ชิ้นที่ร่วงไป
             document.getElementById('game-over').style.display = 'block';
+            spawnerEl.style.display = 'none';
         }
 
-        function resetGame() {
+        // ฟังก์ชันเริ่มเกมใหม่
+        window.restartGame = function() {
+            // ล้างโลกฟิสิกส์เดิม
+            Render.stop(render);
+            Runner.stop(runner);
+            render.canvas.remove();
+            engine.world.bodies = [];
+            
+            // รีเซ็ตค่าต่างๆ
             score = 0;
-            stack = [];
-            cameraY = 0;
-            fallingCookie = null;
-            movingCookie = { x: 0, y: 100, w: cookieSize, h: cookieSize, speed: 4, direction: 1 };
-            gameState = 'playing';
-            document.getElementById('score-display').innerText = `ชั้นที่: 0`;
+            scoreEl.innerText = score;
+            isGameOver = false;
             document.getElementById('game-over').style.display = 'none';
-        }
+            spawnerEl.style.display = 'block';
+            
+            initGame();
+        };
 
-        // เริ่มเกม
-        gameLoop();
+        // รองรับการคลิกเมาส์และทัชสกรีน
+        document.body.addEventListener('mousedown', dropCookie);
+        document.body.addEventListener('touchstart', dropCookie, {passive: false});
 
+        // เริ่มต้นทำงาน
+        window.onload = initGame;
+        
+        // อัปเดตขนาดเวลาหมุนจอ (มือถือ)
+        window.addEventListener('resize', () => {
+            if(render) {
+                render.canvas.width = window.innerWidth;
+                render.canvas.height = window.innerHeight;
+            }
+        });
     </script>
 </body>
 </html>
